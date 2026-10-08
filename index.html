@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="String Book">
+<meta name="theme-color" content="#136B47">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<style>:root{padding-top:env(safe-area-inset-top,0px)}body{margin:0}</style>
+<title>String Book</title>
+<style>
+/* Layout: single phone column, filled green summary panel, sport cards, fixed bottom tab bar */
+:root{
+  --bg:#ECF1ED; --surface:#FFFFFF; --surface-2:#F3F7F4; --ink:#13221B; --muted:#5A6B62; --line:#D5E0D8;
+  --accent:#136B47; --accent-2:#0D5236; --on-accent:#FFFFFF; --ball:#DDE94A;
+  --tennis:#4C7D12; --squash:#B4412A; --badminton:#2D5FAE; --ben:#0D7882; --extras:#8A5A0B; --danger:#B3261E;
+  --tennis-bg:#EEF5E1; --squash-bg:#FAEAE6; --badminton-bg:#E7EEFA; --ben-bg:#E2F3F4; --extras-bg:#F7EEDD;
+  --font:-apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI", Roboto, sans-serif;
+  --num:ui-rounded, "SF Pro Rounded", -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+  --r:16px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0B1510; --surface:#14231B; --surface-2:#1A2C22; --ink:#E6F0EA; --muted:#94A99D; --line:#26392E;
+  --accent:#2F9E6E; --accent-2:#1F7A53; --on-accent:#04130C; --ball:#DDE94A;
+  --tennis:#B2D74A; --squash:#F08468; --badminton:#82A9F0; --ben:#52C8D0; --extras:#E2B35E; --danger:#F2867E;
+  --tennis-bg:#1E2B14; --squash-bg:#2E1C17; --badminton-bg:#18233A; --ben-bg:#122B2D; --extras-bg:#2B2213; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0B1510; --surface:#14231B; --surface-2:#1A2C22; --ink:#E6F0EA; --muted:#94A99D; --line:#26392E;
+  --accent:#2F9E6E; --accent-2:#1F7A53; --on-accent:#04130C; --ball:#DDE94A;
+  --tennis:#B2D74A; --squash:#F08468; --badminton:#82A9F0; --ben:#52C8D0; --extras:#E2B35E; --danger:#F2867E;
+  --tennis-bg:#1E2B14; --squash-bg:#2E1C17; --badminton-bg:#18233A; --ben-bg:#122B2D; --extras-bg:#2B2213; color-scheme:dark }
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{background:var(--bg);color:var(--ink)}
+body{font-family:var(--font);font-size:15px;line-height:1.4;-webkit-tap-highlight-color:transparent}
+.wrap{max-width:560px;margin:0 auto;padding-inline:16px;padding-block:12px calc(96px + env(safe-area-inset-bottom,0px))}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.num{font-family:var(--num);font-variant-numeric:tabular-nums}
+h1,h2,h3{margin:0;text-wrap:balance}
+.label{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.muted{color:var(--muted)}
+.stack{display:flex;flex-direction:column;gap:14px}
+
+/* header */
+.top{display:flex;align-items:center;gap:10px;padding-block:6px 4px}
+.top img{width:36px;height:36px;border-radius:9px}
+.top h1{font-size:20px;font-weight:700;letter-spacing:-.01em;flex:1}
+.yearsel{appearance:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-weight:600;font-size:14px}
+
+/* summary */
+.hero{background:var(--accent);color:var(--on-accent);border-radius:20px;padding:18px 18px 16px;display:grid;gap:12px}
+.hero .label{color:inherit;opacity:.8}
+.hero .big{font-size:40px;font-weight:700;line-height:1;letter-spacing:-.02em}
+.hero .row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;border-top:1px solid color-mix(in srgb,var(--on-accent) 22%,transparent);padding-top:12px}
+.hero .row b{display:block;font-size:17px}
+.hero .row span{font-size:12px;opacity:.8}
+
+/* cards */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.card h2{font-size:16px;font-weight:700}
+
+/* entry */
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:var(--surface-2);padding:4px;border-radius:12px}
+.seg button{border:0;background:transparent;padding:10px 4px;border-radius:9px;font-weight:600;font-size:14px;color:var(--muted)}
+.seg button[aria-pressed="true"]{color:#fff;background:var(--c)}
+:root[data-theme="dark"] .seg button[aria-pressed="true"]{color:#08110C}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .seg button[aria-pressed="true"]{color:#08110C}}
+.price{display:flex;align-items:center;gap:6px;border:2px solid var(--line);border-radius:14px;padding:4px 14px;background:var(--surface)}
+.price:focus-within{border-color:var(--c,var(--accent))}
+.price span{font-size:28px;font-weight:600;color:var(--muted)}
+.price input{border:0;outline:0;background:transparent;font-size:34px;font-weight:700;width:100%;min-width:0;padding:6px 0;font-family:var(--num)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--surface-2);border-radius:999px;padding:6px 12px;font-weight:600;font-size:14px}
+.row2{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.date{border:1px solid var(--line);background:var(--surface-2);border-radius:10px;padding:8px 10px;font-size:14px}
+.btn{border:0;border-radius:14px;padding:14px 16px;font-weight:700;font-size:16px;background:var(--c,var(--accent));color:#fff;width:100%}
+:root[data-theme="dark"] .btn{color:#06110B}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .btn{color:#06110B}}
+.btn.ghost{background:var(--surface-2);color:var(--ink);border:1px solid var(--line)}
+.btn.small{padding:10px 14px;font-size:14px;width:auto}
+.note{font-size:13px;color:var(--muted)}
+.warn{color:var(--danger)}
+
+/* sport cards */
+.sport{display:grid;gap:12px}
+.sport-head{display:flex;align-items:center;gap:8px}
+.dot{width:12px;height:12px;border-radius:50%;background:var(--c);flex:none}
+.sport-head h2{flex:1}
+.rate{font-size:12px;font-weight:600;color:var(--c);background:var(--cbg);padding:3px 8px;border-radius:999px}
+.stats3{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:8px}
+.stats3 b{display:block;font-size:22px;font-weight:700;line-height:1.15}
+.stats3 .p b{color:var(--c)}
+.stats3 span{font-size:12px;color:var(--muted)}
+.ben{background:var(--ben-bg);border-radius:12px;padding:12px;display:flex;align-items:center;gap:12px}
+.ben .t{flex:1;min-width:0}
+.ben .t strong{display:block;font-size:14px}
+.ben .t span{font-size:13px;color:var(--muted)}
+.ben .n{font-size:20px;font-weight:700;color:var(--ben)}
+.benbtn{border:0;border-radius:12px;background:var(--ben);color:#fff;font-weight:700;padding:10px 14px;font-size:15px;white-space:nowrap}
+:root[data-theme="dark"] .benbtn{color:#06110B}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .benbtn{color:#06110B}}
+
+.extras-in{display:flex;gap:8px}
+.extras-in .price{flex:1;padding:2px 12px}
+.extras-in .price span{font-size:20px}
+.extras-in .price input{font-size:22px}
+
+/* recent */
+.list{display:flex;flex-direction:column}
+.item{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.item:first-child{border-top:0}
+.item .w{flex:1;min-width:0}
+.item .w b{font-size:14px}
+.item .w div{font-size:12px;color:var(--muted)}
+.item .amt{font-weight:700;text-align:right}
+.item .amt div{font-size:12px;font-weight:500;color:var(--muted)}
+.del{border:1px solid var(--line);background:transparent;border-radius:8px;padding:6px 8px;font-size:12px;color:var(--muted)}
+.del.confirm{background:var(--danger);border-color:var(--danger);color:#fff}
+
+/* tabs */
+.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(3,1fr);padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));z-index:5}
+.tabs button{border:0;background:transparent;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px;font-size:11px;font-weight:600;color:var(--muted)}
+.tabs button svg{width:24px;height:24px}
+.tabs button[aria-current="page"]{color:var(--accent)}
+
+/* reports */
+.tablewrap{overflow-x:auto;margin-inline:-16px;padding-inline:16px}
+table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
+th,td{padding:8px 6px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left;position:sticky;left:0;background:var(--surface)}
+thead th{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:600}
+tr.tot td{font-weight:700;border-bottom:0}
+tr.sub td{color:var(--muted)}
+.est{font-size:10px;font-weight:600;color:var(--muted);background:var(--surface-2);border:1px solid var(--line);border-radius:5px;padding:0 4px;margin-left:4px;vertical-align:1px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.chart svg{width:100%;height:auto;display:block}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kpi{background:var(--surface-2);border-radius:12px;padding:12px}
+.kpi b{display:block;font-size:20px}
+.kpi span{font-size:12px;color:var(--muted)}
+.yrtabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+.yrtabs button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 14px;font-weight:600;white-space:nowrap}
+.yrtabs button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+
+/* settings */
+.field{display:grid;grid-template-columns:1fr 120px;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.field:first-of-type{border-top:0}
+.field label{font-weight:600;font-size:14px}
+.field label small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+.money{display:flex;align-items:center;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);padding:0 10px}
+.money span{color:var(--muted)}
+.money input{border:0;background:transparent;outline:0;width:100%;min-width:0;padding:9px 4px;text-align:right;font-family:var(--num);font-weight:600}
+details{border-top:1px solid var(--line)}
+details:first-of-type{border-top:0}
+summary{padding:12px 0;font-weight:700;cursor:pointer;display:flex;justify-content:space-between;list-style:none}
+summary::-webkit-details-marker{display:none}
+summary span{font-weight:500;color:var(--muted);font-size:13px}
+details .inner{padding-bottom:14px;display:grid;gap:2px}
+.subh{font-size:12px;font-weight:700;margin-top:10px;color:var(--c,var(--muted))}
+textarea{width:100%;min-height:90px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);padding:10px;font:12px ui-monospace,Menlo,monospace;color:var(--ink)}
+
+.setup{border:1px dashed var(--accent);background:color-mix(in srgb,var(--accent) 7%,var(--surface))}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(80px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);border-radius:12px;padding:10px 14px;display:flex;gap:14px;align-items:center;font-size:14px;z-index:9;max-width:calc(100% - 32px);box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.toast button{border:0;background:transparent;color:var(--ball);font-weight:700}
+@media (prefers-reduced-motion:no-preference){.toast{animation:up .18s ease-out}@keyframes up{from{transform:translate(-50%,8px);opacity:0}}}
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header class="top">
+    <img src="data:image/png;base64,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" alt="">
+    <h1>String Book</h1>
+    <select class="yearsel" id="yearSel" aria-label="Stringing year"></select>
+  </header>
+
+  <main id="view-home" class="stack"></main>
+  <main id="view-reports" class="stack" hidden></main>
+  <main id="view-settings" class="stack" hidden></main>
+</div>
+
+<nav class="tabs" aria-label="Sections">
+  <button data-tab="home" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="10" cy="9" rx="6" ry="7"/><path d="M14.5 14 20 20M7 6h6M6 9h8M7 12h6"/></svg>Takings</button>
+  <button data-tab="reports"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Reports</button>
+  <button data-tab="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>Settings</button>
+</nav>
+<div id="toastHost"></div>
+
+<script>
+(function(){
+const KEY='stringbook-v1';
+const SPORTS=[{id:'tennis',name:'Tennis'},{id:'squash',name:'Squash'},{id:'badminton',name:'Badminton'}];
+const MONTHS=['May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr'];
+const gbp=new Intl.NumberFormat('en-GB',{style:'currency',currency:'GBP'});
+const gbp0=new Intl.NumberFormat('en-GB',{style:'currency',currency:'GBP',maximumFractionDigits:0});
+const money=v=>gbp.format(v||0);
+const money0=v=>Math.abs(v)>=100||Number.isInteger(r2(v))?gbp0.format(Math.round(v||0)):gbp.format(v||0);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const r2=v=>Math.round((+v||0)*100)/100;
+const $=s=>document.querySelector(s);
+
+function fresh(){return{v:1,settings:{profit:{tennis:13.5,squash:13,badminton:14},avgPrice:{tennis:21,squash:21,badminton:21},benRate:13,lastSport:'tennis',lastPrice:{}},openings:{},entries:[],startedAt:new Date().toISOString()};}
+let storageOK=true;
+function load(){try{const r=localStorage.getItem(KEY);if(r){const d=JSON.parse(r);const f=fresh();d.settings=Object.assign(f.settings,d.settings||{});d.settings.avgPrice=Object.assign(f.settings.avgPrice,d.settings.avgPrice||{});d.openings=d.openings||{};d.entries=d.entries||[];d.startedAt=d.startedAt||f.startedAt;return d;}}catch(e){storageOK=false;}return fresh();}
+let S=load();
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));storageOK=true;}catch(e){storageOK=false;toast('Could not save on this device. Export a backup from Settings.');}}
+
+const fyOf=d=>{d=new Date(d);return d.getMonth()>=4?d.getFullYear():d.getFullYear()-1};
+const fyLabel=y=>String(y%100).padStart(2,'0')+'/'+String((y+1)%100).padStart(2,'0');
+const fyIdx=d=>{d=new Date(d);return (d.getMonth()-4+12)%12};
+const CUR=fyOf(new Date());
+let year=CUR;
+function years(){const s=new Set([2024,2025,CUR]);Object.keys(S.openings).forEach(k=>s.add(+k));S.entries.forEach(e=>s.add(fyOf(e.ts)));return [...s].sort((a,b)=>a-b);}
+
+/* opening balance -> estimated full figures */
+function openingFigures(y){
+  const o=S.openings[y];if(!o)return null;const st=S.settings;const out={};
+  SPORTS.forEach(sp=>{const p=+(o[sp.id]||0);const rate=+st.profit[sp.id]||1;const rk=Math.round(p/rate);out[sp.id]={profit:p,rackets:rk,takings:r2(rk*(+st.avgPrice[sp.id]||0))};});
+  const ba=+(o.ben||0);out.ben={amount:ba,count:Math.round(ba/(+st.benRate||13))};out.extras=+(o.extras||0);
+  return out;
+}
+/* months an opening is spread across */
+function openingMonths(y){
+  if(y<CUR)return [...Array(12).keys()];
+  const start=S.openings[y]&&S.openings[y].asOf?new Date(S.openings[y].asOf):new Date(S.startedAt);
+  if(fyOf(start)!==y)return [...Array(12).keys()];
+  const n=Math.max(1,fyIdx(start)); return [...Array(n).keys()];
+}
+function blank(){const b={};SPORTS.forEach(s=>b[s.id]={profit:0,takings:0,rackets:0});b.ben={amount:0,count:0};b.extras=0;b.extrasCount=0;return b;}
+function addInto(t,e){
+  if(e.type==='job'){const s=t[e.sport];s.profit+=e.profit;s.takings+=e.price;s.rackets+=1;}
+  else if(e.type==='ben'){t.ben.amount+=e.price;t.ben.count+=1;}
+  else if(e.type==='extra'){t.extras+=e.price;t.extrasCount+=1;}
+}
+function totals(y){
+  const t=blank();const o=openingFigures(y);
+  if(o){SPORTS.forEach(s=>{t[s.id].profit+=o[s.id].profit;t[s.id].takings+=o[s.id].takings;t[s.id].rackets+=o[s.id].rackets;});t.ben.amount+=o.ben.amount;t.ben.count+=o.ben.count;t.extras+=o.extras;}
+  S.entries.forEach(e=>{if(fyOf(e.ts)===y)addInto(t,e);});
+  return finish(t);
+}
+function finish(t){
+  t.stringProfit=SPORTS.reduce((a,s)=>a+t[s.id].profit,0);
+  t.stringTakings=SPORTS.reduce((a,s)=>a+t[s.id].takings,0);
+  t.rackets=SPORTS.reduce((a,s)=>a+t[s.id].rackets,0)+t.ben.count;
+  t.profit=t.stringProfit+t.ben.amount+t.extras;
+  t.takings=t.stringTakings+t.ben.amount+t.extras;
+  return t;
+}
+function monthly(y){
+  const m=[...Array(12)].map(()=>Object.assign(blank(),{est:false}));
+  const o=openingFigures(y);
+  if(o){const ms=openingMonths(y);const n=ms.length;ms.forEach(i=>{const t=m[i];t.est=true;
+    SPORTS.forEach(s=>{t[s.id].profit+=o[s.id].profit/n;t[s.id].takings+=o[s.id].takings/n;t[s.id].rackets+=o[s.id].rackets/n;});
+    t.ben.amount+=o.ben.amount/n;t.ben.count+=o.ben.count/n;t.extras+=o.extras/n;});}
+  S.entries.forEach(e=>{if(fyOf(e.ts)===y)addInto(m[fyIdx(e.ts)],e);});
+  return m.map(finish);
+}
+
+/* ---------- toast ---------- */
+let toastT;
+function toast(msg,undo){const h=$('#toastHost');clearTimeout(toastT);h.innerHTML=`<div class="toast" role="status"><span>${esc(msg)}</span>${undo?'<button id="undoBtn">Undo</button>':''}</div>`;
+  if(undo)$('#undoBtn').onclick=()=>{undo();h.innerHTML='';};toastT=setTimeout(()=>h.innerHTML='',4500);}
+
+/* ---------- home ---------- */
+let sport=S.settings.lastSport||'tennis';
+const todayStr=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+let entryDate=todayStr();
+function quickPrices(sp){
+  const c={};S.entries.filter(e=>e.type==='job'&&e.sport===sp).slice(-60).forEach(e=>c[e.price]=(c[e.price]||0)+1);
+  let top=Object.keys(c).sort((a,b)=>c[b]-c[a]).slice(0,4).map(Number);
+  if(top.length<3)top=[...new Set([...top,20,21,23,25])].slice(0,4);
+  return top.sort((a,b)=>a-b);
+}
+function tsFor(dateStr){const n=new Date();if(dateStr===todayStr())return n.toISOString();const [y,m,d]=dateStr.split('-').map(Number);return new Date(y,m-1,d,12).toISOString();}
+function addEntry(e){e.id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);S.entries.push(e);save();render();return e.id;}
+function removeEntry(id){S.entries=S.entries.filter(e=>e.id!==id);save();render();}
+
+function renderHome(){
+  const t=totals(year);const isCur=year===CUR;const st=S.settings;
+  const noOpenings=!S.openings[2024]&&!S.openings[2025]&&!S.openings[CUR];
+  const c=`var(--${sport})`;
+  const qp=quickPrices(sport);const last=st.lastPrice[sport];
+  const sportCard=sp=>{const v=t[sp.id];
+    return `<section class="card sport" style="--c:var(--${sp.id});--cbg:var(--${sp.id}-bg)">
+      <div class="sport-head"><span class="dot"></span><h2>${sp.name}</h2><span class="rate num">${money(st.profit[sp.id])} / racket</span></div>
+      <div class="stats3">
+        <div class="p"><b class="num">${money0(v.profit)}</b><span>Profit</span></div>
+        <div><b class="num">${money0(v.takings)}</b><span>Taken</span></div>
+        <div><b class="num">${Math.round(v.rackets)}</b><span>Rackets</span></div>
+      </div>
+      ${sp.id==='tennis'?`<div class="ben">
+        <div class="t"><strong>Ben restrings</strong><span><span class="num n">${Math.round(t.ben.count)}</span> &middot; <span class="num">${money(t.ben.amount)}</span> this year</span></div>
+        ${isCur?`<button class="benbtn" id="benAdd">+1 &nbsp;${money(st.benRate)}</button>`:''}
+      </div>`:''}
+    </section>`;};
+  const recent=S.entries.filter(e=>fyOf(e.ts)===year).slice().sort((a,b)=>b.ts<a.ts?-1:b.ts>a.ts?1:0).slice(0,8);
+  $('#view-home').innerHTML=`
+    ${!storageOK?`<div class="card warn">This browser is blocking storage, so entries will not be kept. Open the app from your home screen.</div>`:''}
+    ${noOpenings?`<section class="card setup stack"><h2>Add your earlier totals</h2><p class="note" style="margin:0">Enter the stringing profit for 24/25, 25/26 and 26/27 so far. Reports then cover every year.</p><button class="btn small" data-goto="settings">Enter totals</button></section>`:''}
+    <section class="hero">
+      <div><div class="label">${fyLabel(year)} total profit${isCur?' so far':''}</div><div class="big num">${money(t.profit)}</div></div>
+      <div class="row">
+        <div><b class="num">${money0(t.takings)}</b><span>Taken</span></div>
+        <div><b class="num">${Math.round(t.rackets)}</b><span>Rackets</span></div>
+        <div><b class="num">${money0(t.extras)}</b><span>Extras</span></div>
+      </div>
+    </section>
+    ${isCur?`<section class="card stack" style="--c:${c}">
+      <div class="seg" role="group" aria-label="Sport">${SPORTS.map(sp=>`<button data-sport="${sp.id}" aria-pressed="${sp.id===sport}" style="--c:var(--${sp.id})">${sp.name}</button>`).join('')}</div>
+      <label class="label" for="priceIn">Total price for this racket</label>
+      <div class="price"><span>£</span><input id="priceIn" class="num" inputmode="decimal" placeholder="${last??qp[1]??21}" value="" autocomplete="off"></div>
+      <div class="chips">${qp.map(p=>`<button class="chip num" data-price="${p}">${money(p).replace('.00','')}</button>`).join('')}</div>
+      <div class="row2"><input type="date" id="dateIn" class="date" value="${entryDate}" max="${todayStr()}" aria-label="Date"><span class="note" id="calc"></span></div>
+      <button class="btn" id="addJob">Add ${SPORTS.find(s=>s.id===sport).name} restring</button>
+    </section>`:`<section class="card note">Viewing ${fyLabel(year)}. Switch to ${fyLabel(CUR)} at the top to add new takings.</section>`}
+    ${SPORTS.map(sportCard).join('')}
+    <section class="card stack" style="--c:var(--extras)">
+      <div class="sport-head"><span class="dot"></span><h2>Extras</h2><span class="note">grips, overgrips, etc.</span></div>
+      <div class="stats3"><div class="p"><b class="num">${money0(t.extras)}</b><span>Taken this year</span></div><div><b class="num">${t.extrasCount}</b><span>Sales logged</span></div><div></div></div>
+      ${isCur?`<div class="extras-in"><div class="price"><span>£</span><input id="extraIn" class="num" inputmode="decimal" placeholder="0.00" aria-label="Extra amount"></div><button class="btn small" id="addExtra" style="--c:var(--extras)">Add</button></div>`:''}
+    </section>
+    <section class="card"><h2 style="margin-bottom:6px">Recent</h2>
+      ${recent.length?`<div class="list">${recent.map(itemHTML).join('')}</div>`:`<p class="note" style="margin:0">Nothing logged in ${fyLabel(year)} yet. Your first restring will appear here.</p>`}
+    </section>`;
+  bindHome();
+}
+function itemHTML(e){
+  const d=new Date(e.ts).toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+  const name=e.type==='job'?SPORTS.find(s=>s.id===e.sport).name:e.type==='ben'?'Ben restring':'Extras';
+  const col=e.type==='job'?e.sport:e.type==='ben'?'ben':'extras';
+  const sub=e.type==='job'?`profit ${money(e.profit)}`:e.type==='ben'?'Ben':'';
+  return `<div class="item"><span class="dot" style="--c:var(--${col})"></span><div class="w"><b>${name}</b><div>${d}</div></div><div class="amt num">${money(e.price)}<div>${sub}</div></div><button class="del" data-del="${e.id}" aria-label="Delete entry">Delete</button></div>`;
+}
+function updateCalc(){
+  const el=$('#calc');if(!el)return;const v=parseFloat(($('#priceIn').value||'').replace(/[£,]/g,''));const p=S.settings.profit[sport];
+  if(isNaN(v)){el.textContent=`Profit ${money(p)} per racket`;el.classList.remove('warn');return;}
+  el.textContent=`Profit ${money(p)} · strings ${money(v-p)}`;el.classList.toggle('warn',v<p);
+}
+function bindHome(){
+  document.querySelectorAll('[data-sport]').forEach(b=>b.onclick=()=>{sport=b.dataset.sport;S.settings.lastSport=sport;save();const keep=$('#priceIn').value;renderHome();$('#priceIn').value=keep;updateCalc();});
+  document.querySelectorAll('[data-price]').forEach(b=>b.onclick=()=>{$('#priceIn').value=b.dataset.price;updateCalc();});
+  const pi=$('#priceIn');if(pi){pi.oninput=updateCalc;pi.onkeydown=e=>{if(e.key==='Enter')$('#addJob').click();};updateCalc();}
+  const di=$('#dateIn');if(di)di.onchange=()=>{entryDate=di.value||todayStr();};
+  const aj=$('#addJob');if(aj)aj.onclick=()=>{
+    let raw=(pi.value||'').replace(/[£,]/g,'').trim();if(raw==='')raw=pi.placeholder;
+    const v=r2(parseFloat(raw));if(!(v>0)){toast('Enter the price taken, e.g. 21');pi.focus();return;}
+    const id=addEntry({type:'job',sport,price:v,profit:+S.settings.profit[sport],ts:tsFor(entryDate)});
+    S.settings.lastPrice[sport]=v;save();
+    toast(`${SPORTS.find(s=>s.id===sport).name} ${money(v)} added`,()=>removeEntry(id));
+  };
+  const ba=$('#benAdd');if(ba)ba.onclick=()=>{const id=addEntry({type:'ben',price:+S.settings.benRate,profit:+S.settings.benRate,ts:tsFor(entryDate)});toast(`Ben restring added (${money(S.settings.benRate)})`,()=>removeEntry(id));};
+  const ae=$('#addExtra');if(ae)ae.onclick=()=>{const ei=$('#extraIn');const v=r2(parseFloat((ei.value||'').replace(/[£,]/g,'')));if(!(v>0)){toast('Enter the extras amount');ei.focus();return;}
+    const id=addEntry({type:'extra',price:v,profit:v,ts:tsFor(entryDate)});toast(`Extras ${money(v)} added`,()=>removeEntry(id));};
+  bindDeletes();
+  document.querySelectorAll('[data-goto]').forEach(b=>b.onclick=()=>go(b.dataset.goto));
+}
+function bindDeletes(){document.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{
+  if(b.classList.contains('confirm')){removeEntry(b.dataset.del);toast('Entry deleted');return;}
+  b.classList.add('confirm');b.textContent='Confirm';setTimeout(()=>{b.classList.remove('confirm');b.textContent='Delete';},3000);});}
+
+/* ---------- reports ---------- */
+let repYear=CUR;
+function stackChart(cats,series,h){
+  const W=340,H=h||190,L=44,B=22,T=10;const max=Math.max(1,...cats.map((_,i)=>series.reduce((a,s)=>a+s.vals[i],0)));
+  const step=[50,100,200,250,500,1000,2000,2500,5000,10000].find(s=>max/s<=5)||Math.ceil(max/5);const top=Math.ceil(max/step)*step;
+  const y=v=>T+(H-T-B)*(1-v/top);const bw=(W-L)/cats.length;let g='';
+  for(let v=0;v<=top;v+=step)g+=`<line x1="${L}" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L-6}" y="${y(v)+4}" text-anchor="end" font-size="10" fill="var(--muted)">${v>=1000?'£'+v/1000+'k':'£'+v}</text>`;
+  cats.forEach((c,i)=>{let acc=0;const x=L+i*bw+bw*0.18,w=bw*0.64;
+    series.forEach(s=>{const v=s.vals[i];if(v>0){g+=`<rect x="${x}" y="${y(acc+v)}" width="${w}" height="${Math.max(0,y(acc)-y(acc+v))}" fill="var(--${s.c})"/>`;acc+=v;}});
+    g+=`<text x="${x+w/2}" y="${H-6}" text-anchor="middle" font-size="10" fill="var(--muted)">${c}</text>`;});
+  return `<svg viewBox="0 0 ${W} ${H}" role="img">${g}</svg>`;
+}
+const legend=`<div class="legend">${[['tennis','Tennis'],['ben','Ben'],['squash','Squash'],['badminton','Badminton'],['extras','Extras']].map(([c,n])=>`<span><i style="background:var(--${c})"></i>${n}</span>`).join('')}</div>`;
+function renderReports(){
+  const ys=years();const all=ys.map(y=>[y,totals(y)]);const t=totals(repYear);const m=monthly(repYear);
+  const series=t2=>[{c:'tennis',vals:t2.map(x=>x.tennis.profit)},{c:'ben',vals:t2.map(x=>x.ben.amount)},{c:'squash',vals:t2.map(x=>x.squash.profit)},{c:'badminton',vals:t2.map(x=>x.badminton.profit)},{c:'extras',vals:t2.map(x=>x.extras)}];
+  const hasOpen=!!S.openings[repYear];
+  const logged=S.entries.filter(e=>fyOf(e.ts)===repYear&&e.type==='job');
+  const avg=sp=>{const l=logged.filter(e=>e.sport===sp);return l.length?l.reduce((a,e)=>a+e.price,0)/l.length:null};
+  const best=m.reduce((b,x,i)=>x.profit>m[b].profit?i:b,0);
+  const activeMonths=m.filter(x=>x.profit>0).length||1;
+  const prev=all.find(([y])=>y===repYear-1);
+  const change=prev&&prev[1].profit>0?(t.profit-prev[1].profit)/prev[1].profit*100:null;
+  const cell=(v,f)=>v?f(v):'<span class="muted">–</span>';
+  const rows=[
+    ['Tennis profit',x=>x.tennis.profit,money0],['Ben',x=>x.ben.amount,money0],['Tennis + Ben',x=>x.tennis.profit+x.ben.amount,money0,'sub'],
+    ['Squash profit',x=>x.squash.profit,money0],['Badminton profit',x=>x.badminton.profit,money0],['Extras',x=>x.extras,money0],
+    ['Total profit',x=>x.profit,money0,'tot'],['Total taken',x=>x.takings,money0,'sub'],['Rackets',x=>Math.round(x.rackets),String,'sub']];
+  $('#view-reports').innerHTML=`
+    <section class="card stack"><h2>Year on year</h2>${legend}
+      <div class="chart">${stackChart(all.map(([y])=>fyLabel(y)),series(all.map(a=>a[1])))}</div>
+      <div class="tablewrap"><table><thead><tr><th></th>${all.map(([y])=>`<th>${fyLabel(y)}</th>`).join('')}</tr></thead><tbody>
+        ${rows.map(([n,f,fm,cls])=>`<tr class="${cls||''}"><td>${n}</td>${all.map(([,x])=>`<td class="num">${cell(f(x),fm)}</td>`).join('')}</tr>`).join('')}
+      </tbody></table></div>
+      <p class="note" style="margin:0">Earlier years are from the totals you entered. Rackets and takings there are estimated at ${SPORTS.map(s=>`${s.name} ${money0(S.settings.avgPrice[s.id])}`).join(', ')} per racket.</p>
+    </section>
+    <div class="yrtabs" role="group" aria-label="Report year">${ys.map(y=>`<button data-ry="${y}" aria-pressed="${y===repYear}">${fyLabel(y)}</button>`).join('')}</div>
+    <section class="card stack"><h2>${fyLabel(repYear)} at a glance</h2>
+      <div class="kpis">
+        <div class="kpi"><b class="num">${money0(t.profit)}</b><span>Total profit${change!=null?` · <span style="color:var(--${change>=0?'accent':'danger'})">${change>=0?'+':''}${change.toFixed(0)}% vs ${fyLabel(repYear-1)}</span>`:''}</span></div>
+        <div class="kpi"><b class="num">${Math.round(t.rackets)}</b><span>Rackets strung</span></div>
+        <div class="kpi"><b class="num">${money0(t.profit/activeMonths)}</b><span>Average profit per month</span></div>
+        <div class="kpi"><b>${t.profit>0?MONTHS[best]:'–'}${m[best].est?'<span class="est">est.</span>':''}</b><span>Best month</span></div>
+        <div class="kpi"><b class="num">${money0(t.stringTakings-t.stringProfit)}</b><span>Spent on strings</span></div>
+        <div class="kpi"><b class="num">${money0(t.tennis.profit+t.ben.amount)}</b><span>Tennis + Ben</span></div>
+      </div>
+      ${logged.length?`<div class="note">Average price logged: ${SPORTS.map(s=>{const a=avg(s.id);return `${s.name} ${a?money(a):'–'}`}).join(' · ')}</div>`:''}
+    </section>
+    <section class="card stack"><h2>${fyLabel(repYear)} by month</h2>${legend}
+      <div class="chart">${stackChart(MONTHS.map(x=>x[0]),series(m),170)}</div>
+      <div class="tablewrap"><table><thead><tr><th>Month</th><th>Tennis</th><th>Ben</th><th>Squash</th><th>Badm.</th><th>Extras</th><th>Profit</th><th>Taken</th><th>Rackets</th></tr></thead><tbody>
+      ${m.map((x,i)=>`<tr><td>${MONTHS[i]}${x.est?'<span class="est">est.</span>':''}</td>
+        <td class="num">${cell(x.tennis.profit,money0)}</td><td class="num">${cell(x.ben.amount,money0)}</td><td class="num">${cell(x.squash.profit,money0)}</td><td class="num">${cell(x.badminton.profit,money0)}</td><td class="num">${cell(x.extras,money0)}</td>
+        <td class="num"><b>${cell(x.profit,money0)}</b></td><td class="num">${cell(x.takings,money0)}</td><td class="num">${cell(Math.round(x.rackets),String)}</td></tr>`).join('')}
+      <tr class="tot"><td>Total</td><td class="num">${money0(t.tennis.profit)}</td><td class="num">${money0(t.ben.amount)}</td><td class="num">${money0(t.squash.profit)}</td><td class="num">${money0(t.badminton.profit)}</td><td class="num">${money0(t.extras)}</td><td class="num">${money0(t.profit)}</td><td class="num">${money0(t.takings)}</td><td class="num">${Math.round(t.rackets)}</td></tr>
+      </tbody></table></div>
+      ${hasOpen?`<p class="note" style="margin:0">Months marked est. share your entered ${fyLabel(repYear)} totals out evenly${repYear===CUR?', up to when you started logging':''}.</p>`:''}
+    </section>`;
+  document.querySelectorAll('[data-ry]').forEach(b=>b.onclick=()=>{repYear=+b.dataset.ry;renderReports();});
+}
+
+/* ---------- settings ---------- */
+function moneyField(id,label,val,small){return `<div class="field"><label for="${id}">${label}${small?`<small>${small}</small>`:''}</label><div class="money"><span>£</span><input id="${id}" class="num" inputmode="decimal" value="${val??''}" placeholder="0"></div></div>`;}
+function renderSettings(){
+  const st=S.settings;const oy=[2024,2025,CUR].filter((v,i,a)=>a.indexOf(v)===i);
+  $('#view-settings').innerHTML=`
+    <section class="card"><h2>Profit per racket</h2><p class="note">Changes apply to new restrings only. Earlier entries keep the profit they were logged with.</p>
+      ${SPORTS.map(s=>moneyField('set-p-'+s.id,s.name,st.profit[s.id])).join('')}
+      ${moneyField('set-ben','Ben restring',st.benRate,'Added to Ben\'s total for each +1')}
+      <button class="btn" id="saveRates" style="margin-top:10px">Save rates</button></section>
+    <section class="card"><h2>Average price per racket</h2><p class="note">Used to estimate rackets and takings from the earlier totals you enter below.</p>
+      ${SPORTS.map(s=>moneyField('set-a-'+s.id,s.name,st.avgPrice[s.id])).join('')}
+      <button class="btn" id="saveAvg" style="margin-top:10px">Save averages</button></section>
+    <section class="card"><h2>Earlier totals</h2><p class="note">Stringing profit for each year (1 May to 30 April). For ${fyLabel(CUR)}, enter what you made before you started using this app.</p>
+      ${oy.map(y=>{const o=S.openings[y]||{};return `<details${!S.openings[y]?' open':''}><summary>${fyLabel(y)}${y===CUR?' so far':''} <span>${S.openings[y]?money0(SPORTS.reduce((a,s)=>a+(+o[s.id]||0),0)+(+o.ben||0)+(+o.extras||0)):'Not entered'}</span></summary><div class="inner">
+        ${SPORTS.map(s=>moneyField(`op-${y}-${s.id}`,`${s.name} profit`,o[s.id])).join('')}
+        ${moneyField(`op-${y}-ben`,'Ben restrings',o.ben,'Total value')}
+        ${moneyField(`op-${y}-extras`,'Extras',o.extras,'Grips etc.')}
+        <button class="btn small" data-saveop="${y}" style="margin-top:8px">Save ${fyLabel(y)}</button></div></details>`;}).join('')}
+    </section>
+    <section class="card stack"><h2>Backup</h2>
+      <p class="note" style="margin:0">Your figures are stored only on this phone. Save a backup now and then, for example to iCloud Drive, so you can restore it on a new phone.</p>
+      <div class="row2"><button class="btn small" id="expJson">Save backup</button><button class="btn small ghost" id="expCsv">Export CSV</button><button class="btn small ghost" id="copyJson">Copy backup text</button></div>
+      <label class="label" for="impFile">Restore from a backup file</label><input type="file" id="impFile" accept=".json,application/json">
+      <label class="label" for="impText">Or paste backup text</label><textarea id="impText" placeholder='{"v":1,...}'></textarea>
+      <div class="row2"><button class="btn small ghost" id="impBtn">Restore pasted backup</button></div>
+    </section>
+    <section class="card stack"><h2>Start again</h2><p class="note" style="margin:0">Removes every entry and total from this phone.</p><button class="btn small ghost warn" id="wipe">Erase all data</button></section>
+    <p class="note" style="text-align:center">${S.entries.length} entries stored on this phone</p>`;
+  const num=id=>{const v=parseFloat(($('#'+id).value||'').replace(/[£,]/g,''));return isNaN(v)?0:r2(v)};
+  $('#saveRates').onclick=()=>{SPORTS.forEach(s=>st.profit[s.id]=num('set-p-'+s.id));st.benRate=num('set-ben');save();render();toast('Rates saved');};
+  $('#saveAvg').onclick=()=>{SPORTS.forEach(s=>st.avgPrice[s.id]=num('set-a-'+s.id));save();render();toast('Averages saved');};
+  document.querySelectorAll('[data-saveop]').forEach(b=>b.onclick=()=>{const y=+b.dataset.saveop;const o={};SPORTS.forEach(s=>o[s.id]=num(`op-${y}-${s.id}`));o.ben=num(`op-${y}-ben`);o.extras=num(`op-${y}-extras`);
+    if(y===CUR)o.asOf=(S.openings[y]&&S.openings[y].asOf)||S.startedAt;S.openings[y]=o;save();render();toast(`${fyLabel(y)} totals saved`);});
+  const backup=()=>JSON.stringify(S,null,1);
+  const fname=ext=>`string-book-${todayStr()}.${ext}`;
+  async function giveFile(text,name,type){
+    const blob=new Blob([text],{type});
+    try{const f=new File([blob],name,{type});if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:name});return;}}catch(e){if(e&&e.name==='AbortError')return;}
+    try{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();toast('Backup saved');}catch(e){toast('Saving files is blocked here. Use Copy backup text instead.');}
+  }
+  $('#expJson').onclick=()=>giveFile(backup(),fname('json'),'application/json');
+  $('#expCsv').onclick=()=>{const L=['date,financial_year,type,sport,price_taken,profit'];S.entries.forEach(e=>L.push([new Date(e.ts).toISOString().slice(0,10),fyLabel(fyOf(e.ts)),e.type,e.sport||'',e.price,e.profit].join(',')));giveFile(L.join('\n'),fname('csv'),'text/csv');};
+  $('#copyJson').onclick=()=>{const t=backup();navigator.clipboard.writeText(t).then(()=>toast('Backup copied. Paste it into Notes or an email to yourself.'),()=>{const ta=$('#impText');ta.value=t;ta.select();toast('Backup text selected below. Copy it.');});};
+  const restore=txt=>{try{const d=JSON.parse(txt);if(!d||!Array.isArray(d.entries))throw 0;localStorage.setItem(KEY,JSON.stringify(d));S=load();render();toast(`Restored ${S.entries.length} entries`);}catch(e){toast('That isn\'t a String Book backup. Check you copied all of it.');}};
+  $('#impFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>restore(r.result);r.readAsText(f);};
+  $('#impBtn').onclick=()=>restore($('#impText').value);
+  $('#wipe').onclick=function(){if(this.dataset.armed){S=fresh();save();render();toast('All data erased');return;}this.dataset.armed=1;this.textContent='Tap again to erase everything';this.classList.add('warn');setTimeout(()=>{delete this.dataset.armed;this.textContent='Erase all data';},4000);};
+}
+
+/* ---------- shell ---------- */
+let tab='home';
+function go(t){tab=t;document.querySelectorAll('.tabs button').forEach(b=>b.toggleAttribute('aria-current',b.dataset.tab===t)||b.setAttribute('aria-current','page'));
+  document.querySelectorAll('.tabs button').forEach(b=>{if(b.dataset.tab===t)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
+  ['home','reports','settings'].forEach(v=>$('#view-'+v).hidden=v!==t);$('#yearSel').hidden=t==='settings';render();window.scrollTo(0,0);}
+function render(){
+  const ys=years();$('#yearSel').innerHTML=ys.map(y=>`<option value="${y}"${y===year?' selected':''}>${fyLabel(y)}${y===CUR?' (now)':''}</option>`).join('');
+  if(tab==='home')renderHome();else if(tab==='reports'){if(!ys.includes(repYear))repYear=CUR;renderReports();}else renderSettings();
+}
+$('#yearSel').onchange=e=>{year=+e.target.value;repYear=year;render();};
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>go(b.dataset.tab));
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist();}catch(e){}
+render();
+window.__SB={fyOf,totals,monthly};
+})();
+</script>
+
+</body>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(function(){});}</script>
+</html>
