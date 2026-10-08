@@ -220,7 +220,7 @@ function save(){try{localStorage.setItem(KEY,JSON.stringify(S));storageOK=true;}
 const fyOf=d=>{d=new Date(d);return d.getMonth()>=4?d.getFullYear():d.getFullYear()-1};
 const fyLabel=y=>String(y%100).padStart(2,'0')+'/'+String((y+1)%100).padStart(2,'0');
 const fyIdx=d=>{d=new Date(d);return (d.getMonth()-4+12)%12};
-const CUR=fyOf(new Date());
+let CUR=fyOf(new Date());
 let year=CUR;
 function years(){const s=new Set([2024,2025,CUR]);Object.keys(S.openings).forEach(k=>s.add(+k));S.entries.forEach(e=>s.add(fyOf(e.ts)));return [...s].sort((a,b)=>a-b);}
 
@@ -233,7 +233,6 @@ function openingFigures(y){
 }
 /* months an opening is spread across */
 function openingMonths(y){
-  if(y<CUR)return [...Array(12).keys()];
   const start=S.openings[y]&&S.openings[y].asOf?new Date(S.openings[y].asOf):new Date(S.startedAt);
   if(fyOf(start)!==y)return [...Array(12).keys()];
   const n=Math.max(1,fyIdx(start)); return [...Array(n).keys()];
@@ -444,7 +443,7 @@ function renderReports(){
 /* ---------- settings ---------- */
 function moneyField(id,label,val,small){return `<div class="field"><label for="${id}">${label}${small?`<small>${small}</small>`:''}</label><div class="money"><span>£</span><input id="${id}" class="num" inputmode="decimal" value="${val??''}" placeholder="0"></div></div>`;}
 function renderSettings(){
-  const st=S.settings;const oy=[2024,2025,CUR].filter((v,i,a)=>a.indexOf(v)===i);
+  const st=S.settings;const START=fyOf(S.startedAt);const oy=[...new Set([2024,2025,START,...Object.keys(S.openings).map(Number)])].sort((a,b)=>a-b);
   $('#view-settings').innerHTML=`
     <section class="card"><h2>Profit per racket</h2><p class="note">Changes apply to new restrings only. Earlier entries keep the profit they were logged with.</p>
       ${SPORTS.map(s=>moneyField('set-p-'+s.id,s.name,st.profit[s.id])).join('')}
@@ -453,8 +452,8 @@ function renderSettings(){
     <section class="card"><h2>Average price per racket</h2><p class="note">Used to estimate rackets and takings from the earlier totals you enter below.</p>
       ${SPORTS.map(s=>moneyField('set-a-'+s.id,s.name,st.avgPrice[s.id])).join('')}
       <button class="btn" id="saveAvg" style="margin-top:10px">Save averages</button></section>
-    <section class="card"><h2>Earlier totals</h2><p class="note">Stringing profit for each year (1 May to 30 April). For ${fyLabel(CUR)}, enter what you made before you started using this app.</p>
-      ${oy.map(y=>{const o=S.openings[y]||{};return `<details${!S.openings[y]?' open':''}><summary>${fyLabel(y)}${y===CUR?' so far':''} <span>${S.openings[y]?money0(SPORTS.reduce((a,s)=>a+(+o[s.id]||0),0)+(+o.ben||0)+(+o.extras||0)):'Not entered'}</span></summary><div class="inner">
+    <section class="card"><h2>Earlier totals</h2><p class="note">Stringing profit for each year (1 May to 30 April). For ${fyLabel(START)}, enter what you made before you started using this app.</p>
+      ${oy.map(y=>{const o=S.openings[y]||{};return `<details${!S.openings[y]?' open':''}><summary>${fyLabel(y)}${y===START?' before the app':''} <span>${S.openings[y]?money0(SPORTS.reduce((a,s)=>a+(+o[s.id]||0),0)+(+o.ben||0)+(+o.extras||0)):'Not entered'}</span></summary><div class="inner">
         ${SPORTS.map(s=>moneyField(`op-${y}-${s.id}`,`${s.name} profit`,o[s.id])).join('')}
         ${moneyField(`op-${y}-ben`,'Ben restrings',o.ben,'Total value')}
         ${moneyField(`op-${y}-extras`,'Extras',o.extras,'Grips etc.')}
@@ -473,7 +472,7 @@ function renderSettings(){
   $('#saveRates').onclick=()=>{SPORTS.forEach(s=>st.profit[s.id]=num('set-p-'+s.id));st.benRate=num('set-ben');save();render();toast('Rates saved');};
   $('#saveAvg').onclick=()=>{SPORTS.forEach(s=>st.avgPrice[s.id]=num('set-a-'+s.id));save();render();toast('Averages saved');};
   document.querySelectorAll('[data-saveop]').forEach(b=>b.onclick=()=>{const y=+b.dataset.saveop;const o={};SPORTS.forEach(s=>o[s.id]=num(`op-${y}-${s.id}`));o.ben=num(`op-${y}-ben`);o.extras=num(`op-${y}-extras`);
-    if(y===CUR)o.asOf=(S.openings[y]&&S.openings[y].asOf)||S.startedAt;S.openings[y]=o;save();render();toast(`${fyLabel(y)} totals saved`);});
+    if(y===START)o.asOf=(S.openings[y]&&S.openings[y].asOf)||S.startedAt;S.openings[y]=o;save();render();toast(`${fyLabel(y)} totals saved`);});
   const stamp=()=>{const d=new Date(),z=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}-${z(d.getHours())}${z(d.getMinutes())}`;};
   const backup=()=>{const t=totals(CUR);return JSON.stringify(Object.assign({app:'String Book backup',saved:new Date().toLocaleString('en-GB'),summary:`${S.entries.length} entries. ${fyLabel(CUR)} profit so far ${money(t.profit)}, ${Math.round(t.rackets)} rackets.`},S),null,2);};
   const fname=(kind,ext)=>`string-book-${kind}-${stamp()}.${ext}`;
@@ -503,6 +502,7 @@ function render(){
 $('#yearSel').onchange=e=>{year=+e.target.value;repYear=year;render();};
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>go(b.dataset.tab));
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist();}catch(e){}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState!=='visible')return;const n=fyOf(new Date());if(n!==CUR){CUR=n;year=CUR;repYear=CUR;entryDate=todayStr();render();}else if(entryDate!==todayStr()&&tab==='home'){entryDate=todayStr();render();}});
 render();
 window.__SB={fyOf,totals,monthly};
 })();
