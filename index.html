@@ -447,7 +447,7 @@ function renderSettings(){
         <button class="btn small" data-saveop="${y}" style="margin-top:8px">Save ${fyLabel(y)}</button></div></details>`;}).join('')}
     </section>
     <section class="card stack"><h2>Backup</h2>
-      <p class="note" style="margin:0">Your figures are stored only on this phone. Save a backup now and then, for example to iCloud Drive, so you can restore it on a new phone.</p>
+      <p class="note" style="margin:0"><b>${st.lastBackup?'Last backup: '+new Date(st.lastBackup).toLocaleString('en-GB',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):'No backup saved yet.'}</b> Tap Save backup once, then choose Save to Files.</p><p class="note" style="margin:0">Your figures are stored only on this phone. Save a backup now and then, for example to iCloud Drive, so you can restore it on a new phone.</p>
       <div class="row2"><button class="btn small" id="expJson">Save backup</button><button class="btn small ghost" id="expCsv">Export CSV</button><button class="btn small ghost" id="copyJson">Copy backup text</button></div>
       <label class="label" for="impFile">Restore from a backup file</label><input type="file" id="impFile" accept=".json,application/json">
       <label class="label" for="impText">Or paste backup text</label><textarea id="impText" placeholder='{"v":1,...}'></textarea>
@@ -460,15 +460,16 @@ function renderSettings(){
   $('#saveAvg').onclick=()=>{SPORTS.forEach(s=>st.avgPrice[s.id]=num('set-a-'+s.id));save();render();toast('Averages saved');};
   document.querySelectorAll('[data-saveop]').forEach(b=>b.onclick=()=>{const y=+b.dataset.saveop;const o={};SPORTS.forEach(s=>o[s.id]=num(`op-${y}-${s.id}`));o.ben=num(`op-${y}-ben`);o.extras=num(`op-${y}-extras`);
     if(y===CUR)o.asOf=(S.openings[y]&&S.openings[y].asOf)||S.startedAt;S.openings[y]=o;save();render();toast(`${fyLabel(y)} totals saved`);});
-  const backup=()=>JSON.stringify(S,null,1);
-  const fname=ext=>`string-book-${todayStr()}.${ext}`;
-  async function giveFile(text,name,type){
+  const stamp=()=>{const d=new Date(),z=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}-${z(d.getHours())}${z(d.getMinutes())}`;};
+  const backup=()=>{const t=totals(CUR);return JSON.stringify(Object.assign({app:'String Book backup',saved:new Date().toLocaleString('en-GB'),summary:`${S.entries.length} entries. ${fyLabel(CUR)} profit so far ${money(t.profit)}, ${Math.round(t.rackets)} rackets.`},S),null,2);};
+  const fname=(kind,ext)=>`string-book-${kind}-${stamp()}.${ext}`;
+  async function giveFile(text,name,type,done){done=done||function(){};
     const blob=new Blob([text],{type});
-    try{const f=new File([blob],name,{type});if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:name});return;}}catch(e){if(e&&e.name==='AbortError')return;}
-    try{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();toast('Backup saved');}catch(e){toast('Saving files is blocked here. Use Copy backup text instead.');}
+    try{const f=new File([blob],name,{type});if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f]});done();return;}}catch(e){if(e&&e.name==='AbortError')return;}
+    try{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();done();}catch(e){toast('Saving files is blocked here. Use Copy backup text instead.');}
   }
-  $('#expJson').onclick=()=>giveFile(backup(),fname('json'),'application/json');
-  $('#expCsv').onclick=()=>{const L=['date,financial_year,type,sport,price_taken,profit'];S.entries.forEach(e=>L.push([new Date(e.ts).toISOString().slice(0,10),fyLabel(fyOf(e.ts)),e.type,e.sport||'',e.price,e.profit].join(',')));giveFile(L.join('\n'),fname('csv'),'text/csv');};
+  $('#expJson').onclick=()=>giveFile(backup(),fname('backup','json'),'application/json',()=>{S.settings.lastBackup=new Date().toISOString();save();renderSettings();toast('Backup saved');});
+  $('#expCsv').onclick=()=>{const L=['date,financial_year,type,sport,price_taken,profit'];S.entries.forEach(e=>L.push([new Date(e.ts).toISOString().slice(0,10),fyLabel(fyOf(e.ts)),e.type,e.sport||'',e.price,e.profit].join(',')));giveFile(L.join('\n'),fname('entries','csv'),'text/csv',()=>toast('CSV saved'));};
   $('#copyJson').onclick=()=>{const t=backup();navigator.clipboard.writeText(t).then(()=>toast('Backup copied. Paste it into Notes or an email to yourself.'),()=>{const ta=$('#impText');ta.value=t;ta.select();toast('Backup text selected below. Copy it.');});};
   const restore=txt=>{try{const d=JSON.parse(txt);if(!d||!Array.isArray(d.entries))throw 0;localStorage.setItem(KEY,JSON.stringify(d));S=load();render();toast(`Restored ${S.entries.length} entries`);}catch(e){toast('That isn\'t a String Book backup. Check you copied all of it.');}};
   $('#impFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>restore(r.result);r.readAsText(f);};
