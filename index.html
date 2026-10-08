@@ -65,6 +65,10 @@ h1,h2,h3{margin:0;text-wrap:balance}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px}
 .card h2{font-size:16px;font-weight:700}
 
+.last{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px}
+.last div{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.last b{font-size:16px}
+.lwhen{font-weight:600;font-size:14px;color:var(--muted);text-align:right}
 /* entry */
 .seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:var(--surface-2);padding:4px;border-radius:12px}
 .seg button{border:0;background:transparent;padding:10px 4px;border-radius:9px;font-weight:600;font-size:14px;color:var(--muted)}
@@ -283,6 +287,12 @@ function tsFor(dateStr){const n=new Date();if(dateStr===todayStr())return n.toIS
 function addEntry(e){e.id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);S.entries.push(e);save();render();return e.id;}
 function removeEntry(id){S.entries=S.entries.filter(e=>e.id!==id);save();render();}
 
+
+function when(e){const d=new Date(e.ts),n=new Date();const day=x=>new Date(x.getFullYear(),x.getMonth(),x.getDate()).getTime();
+  const diff=Math.round((day(n)-day(d))/864e5);
+  const ds=diff===0?'Today':diff===1?'Yesterday':d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})+(d.getFullYear()!==n.getFullYear()?' '+d.getFullYear():'');
+  return e.noTime?ds:ds+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});}
+function lastOf(test){let b=null;S.entries.forEach(e=>{if(test(e)&&(!b||e.ts>b.ts))b=e;});return b;}
 function renderHome(){
   const t=totals(year);const isCur=year===CUR;const st=S.settings;
   const noOpenings=!S.openings[2024]&&!S.openings[2025]&&!S.openings[CUR];
@@ -296,8 +306,9 @@ function renderHome(){
         <div><b class="num">${money0(v.takings)}</b><span>Taken</span></div>
         <div><b class="num">${Math.round(v.rackets)}</b><span>Rackets</span></div>
       </div>
+      ${(()=>{const L=lastOf(e=>e.type==='job'&&e.sport===sp.id);return `<div class="note">Last strung: ${L?when(L)+' · '+money(L.price):'none logged yet'}</div>`;})()}
       ${sp.id==='tennis'?`<div class="ben">
-        <div class="t"><strong>Ben restrings</strong><span><span class="num n">${Math.round(t.ben.count)}</span> &middot; <span class="num">${money(t.ben.amount)}</span> this year</span></div>
+        <div class="t"><strong>Ben restrings</strong><span><span class="num n">${Math.round(t.ben.count)}</span> &middot; <span class="num">${money(t.ben.amount)}</span> this year</span>${(()=>{const L=lastOf(e=>e.type==='ben');return L?`<span style="display:block">Last: ${when(L)}</span>`:''})()}</div>
         ${isCur?`<button class="benbtn" id="benAdd">+1 &nbsp;${money(st.benRate)}</button>`:''}
       </div>`:''}
     </section>`;};
@@ -313,6 +324,9 @@ function renderHome(){
         <div><b class="num">${money0(t.extras)}</b><span>Extras</span></div>
       </div>
     </section>
+    ${(()=>{const L=lastOf(e=>e.type==='job'||e.type==='ben');if(!L)return '';
+      const nm=L.type==='ben'?'Tennis (Ben)':SPORTS.find(x=>x.id===L.sport).name;const col=L.type==='ben'?'ben':L.sport;
+      return `<section class="last" style="--c:var(--${col})"><span class="dot"></span><div><span class="label">Last restring</span><b>${nm} · <span class="num">${money(L.price)}</span></b></div><span class="lwhen">${when(L)}</span></section>`;})()}
     ${isCur?`<section class="card stack" style="--c:${c}">
       <div class="seg" role="group" aria-label="Sport">${SPORTS.map(sp=>`<button data-sport="${sp.id}" aria-pressed="${sp.id===sport}" style="--c:var(--${sp.id})">${sp.name}</button>`).join('')}</div>
       <label class="label" for="priceIn">Total price for this racket</label>
@@ -333,7 +347,7 @@ function renderHome(){
   bindHome();
 }
 function itemHTML(e){
-  const d=new Date(e.ts).toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+  const d=when(e);
   const name=e.type==='job'?SPORTS.find(s=>s.id===e.sport).name:e.type==='ben'?'Ben restring':'Extras';
   const col=e.type==='job'?e.sport:e.type==='ben'?'ben':'extras';
   const sub=e.type==='job'?`profit ${money(e.profit)}`:e.type==='ben'?'Ben':'';
@@ -352,11 +366,11 @@ function bindHome(){
   const aj=$('#addJob');if(aj)aj.onclick=()=>{
     let raw=(pi.value||'').replace(/[£,]/g,'').trim();if(raw==='')raw=pi.placeholder;
     const v=r2(parseFloat(raw));if(!(v>0)){toast('Enter the price taken, e.g. 21');pi.focus();return;}
-    const id=addEntry({type:'job',sport,price:v,profit:+S.settings.profit[sport],ts:tsFor(entryDate)});
+    const id=addEntry({type:'job',sport,price:v,profit:+S.settings.profit[sport],ts:tsFor(entryDate),noTime:entryDate!==todayStr()});
     S.settings.lastPrice[sport]=v;save();
     toast(`${SPORTS.find(s=>s.id===sport).name} ${money(v)} added`,()=>removeEntry(id));
   };
-  const ba=$('#benAdd');if(ba)ba.onclick=()=>{const id=addEntry({type:'ben',price:+S.settings.benRate,profit:+S.settings.benRate,ts:tsFor(entryDate)});toast(`Ben restring added (${money(S.settings.benRate)})`,()=>removeEntry(id));};
+  const ba=$('#benAdd');if(ba)ba.onclick=()=>{const id=addEntry({type:'ben',price:+S.settings.benRate,profit:+S.settings.benRate,ts:tsFor(entryDate),noTime:entryDate!==todayStr()});toast(`Ben restring added (${money(S.settings.benRate)})`,()=>removeEntry(id));};
   const ae=$('#addExtra');if(ae)ae.onclick=()=>{const ei=$('#extraIn');const v=r2(parseFloat((ei.value||'').replace(/[£,]/g,'')));if(!(v>0)){toast('Enter the extras amount');ei.focus();return;}
     const id=addEntry({type:'extra',price:v,profit:v,ts:tsFor(entryDate)});toast(`Extras ${money(v)} added`,()=>removeEntry(id));};
   bindDeletes();
