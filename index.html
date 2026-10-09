@@ -253,7 +253,7 @@ function totals(y){
 function finish(t){
   t.stringProfit=SPORTS.reduce((a,s)=>a+t[s.id].profit,0);
   t.stringTakings=SPORTS.reduce((a,s)=>a+t[s.id].takings,0);
-  t.rackets=SPORTS.reduce((a,s)=>a+t[s.id].rackets,0)+t.ben.count;
+  t.rackets=SPORTS.reduce((a,s)=>a+t[s.id].rackets,0);
   t.profit=t.stringProfit+t.ben.amount+t.extras;
   t.takings=t.stringTakings+t.ben.amount+t.extras;
   return t;
@@ -261,9 +261,14 @@ function finish(t){
 function monthly(y){
   const m=[...Array(12)].map(()=>Object.assign(blank(),{est:false}));
   const o=openingFigures(y);
-  if(o){const ms=openingMonths(y);const n=ms.length;ms.forEach(i=>{const t=m[i];t.est=true;
-    SPORTS.forEach(s=>{t[s.id].profit+=o[s.id].profit/n;t[s.id].takings+=o[s.id].takings/n;t[s.id].rackets+=o[s.id].rackets/n;});
-    t.ben.amount+=o.ben.amount/n;t.ben.count+=o.ben.count/n;t.extras+=o.extras/n;});}
+  if(o){const ms=openingMonths(y);const n=ms.length;
+    const split=(total,n)=>{const b=Math.floor(total/n),r=total-b*n;return [...Array(n)].map((_,i)=>b+(i<r?1:0));};
+    const money=v=>split(Math.round(v*100),n).map(x=>x/100);
+    const parts={};SPORTS.forEach(sp=>parts[sp.id]={profit:money(o[sp.id].profit),takings:money(o[sp.id].takings),rackets:split(o[sp.id].rackets,n)});
+    const benA=money(o.ben.amount),benC=split(o.ben.count,n),ex=money(o.extras);
+    ms.forEach((mi,k)=>{const t=m[mi];t.est=true;
+      SPORTS.forEach(sp=>{t[sp.id].profit+=parts[sp.id].profit[k];t[sp.id].takings+=parts[sp.id].takings[k];t[sp.id].rackets+=parts[sp.id].rackets[k];});
+      t.ben.amount+=benA[k];t.ben.count+=benC[k];t.extras+=ex[k];});}
   S.entries.forEach(e=>{if(fyOf(e.ts)===y)addInto(m[fyIdx(e.ts)],e);});
   return m.map(finish);
 }
@@ -405,16 +410,16 @@ function renderReports(){
   const change=prev&&prev[1].profit>0?(t.profit-prev[1].profit)/prev[1].profit*100:null;
   const cell=(v,f)=>v?f(v):'<span class="muted">–</span>';
   const rows=[
-    ['Tennis profit',x=>x.tennis.profit,money0],['Ben',x=>x.ben.amount,money0],['Tennis + Ben',x=>x.tennis.profit+x.ben.amount,money0,'sub'],
-    ['Squash profit',x=>x.squash.profit,money0],['Badminton profit',x=>x.badminton.profit,money0],['Extras',x=>x.extras,money0],
-    ['Total profit',x=>x.profit,money0,'tot'],['Total taken',x=>x.takings,money0,'sub'],['Rackets',x=>Math.round(x.rackets),String,'sub']];
+    ['Tennis profit',x=>x.tennis.profit,money],['Ben',x=>x.ben.amount,money],['Tennis + Ben',x=>x.tennis.profit+x.ben.amount,money,'sub'],
+    ['Squash profit',x=>x.squash.profit,money],['Badminton profit',x=>x.badminton.profit,money],['Extras',x=>x.extras,money],
+    ['Total profit',x=>x.profit,money,'tot'],['Total taken',x=>x.takings,money,'sub'],['Rackets (3 sports)',x=>Math.round(x.rackets),String,'sub'],['Ben restrings',x=>Math.round(x.ben.count),String,'sub']];
   $('#view-reports').innerHTML=`
     <section class="card stack"><h2>Year on year</h2>${legend}
       <div class="chart">${stackChart(all.map(([y])=>fyLabel(y)),series(all.map(a=>a[1])))}</div>
       <div class="tablewrap"><table><thead><tr><th></th>${all.map(([y])=>`<th>${fyLabel(y)}</th>`).join('')}</tr></thead><tbody>
         ${rows.map(([n,f,fm,cls])=>`<tr class="${cls||''}"><td>${n}</td>${all.map(([,x])=>`<td class="num">${cell(f(x),fm)}</td>`).join('')}</tr>`).join('')}
       </tbody></table></div>
-      <p class="note" style="margin:0">Earlier years are from the totals you entered. Rackets and takings there are estimated at ${SPORTS.map(s=>`${s.name} ${money0(S.settings.avgPrice[s.id])}`).join(', ')} per racket.</p>
+      <p class="note" style="margin:0">Earlier years are from the totals you entered. Rackets and takings there are estimated at ${SPORTS.map(s=>`${s.name} ${money(S.settings.avgPrice[s.id])}`).join(', ')} per racket.</p>
     </section>
     <div class="yrtabs" role="group" aria-label="Report year">${ys.map(y=>`<button data-ry="${y}" aria-pressed="${y===repYear}">${fyLabel(y)}</button>`).join('')}</div>
     <section class="card stack"><h2>${fyLabel(repYear)} at a glance</h2>
@@ -432,9 +437,9 @@ function renderReports(){
       <div class="chart">${stackChart(MONTHS.map(x=>x[0]),series(m),170)}</div>
       <div class="tablewrap"><table><thead><tr><th>Month</th><th>Tennis</th><th>Ben</th><th>Squash</th><th>Badm.</th><th>Extras</th><th>Profit</th><th>Taken</th><th>Rackets</th></tr></thead><tbody>
       ${m.map((x,i)=>`<tr><td>${MONTHS[i]}${x.est?'<span class="est">est.</span>':''}</td>
-        <td class="num">${cell(x.tennis.profit,money0)}</td><td class="num">${cell(x.ben.amount,money0)}</td><td class="num">${cell(x.squash.profit,money0)}</td><td class="num">${cell(x.badminton.profit,money0)}</td><td class="num">${cell(x.extras,money0)}</td>
-        <td class="num"><b>${cell(x.profit,money0)}</b></td><td class="num">${cell(x.takings,money0)}</td><td class="num">${cell(Math.round(x.rackets),String)}</td></tr>`).join('')}
-      <tr class="tot"><td>Total</td><td class="num">${money0(t.tennis.profit)}</td><td class="num">${money0(t.ben.amount)}</td><td class="num">${money0(t.squash.profit)}</td><td class="num">${money0(t.badminton.profit)}</td><td class="num">${money0(t.extras)}</td><td class="num">${money0(t.profit)}</td><td class="num">${money0(t.takings)}</td><td class="num">${Math.round(t.rackets)}</td></tr>
+        <td class="num">${cell(x.tennis.profit,money)}</td><td class="num">${cell(x.ben.amount,money)}</td><td class="num">${cell(x.squash.profit,money)}</td><td class="num">${cell(x.badminton.profit,money)}</td><td class="num">${cell(x.extras,money)}</td>
+        <td class="num"><b>${cell(x.profit,money)}</b></td><td class="num">${cell(x.takings,money)}</td><td class="num">${cell(Math.round(x.rackets),String)}</td></tr>`).join('')}
+      <tr class="tot"><td>Total</td><td class="num">${money(t.tennis.profit)}</td><td class="num">${money(t.ben.amount)}</td><td class="num">${money(t.squash.profit)}</td><td class="num">${money(t.badminton.profit)}</td><td class="num">${money(t.extras)}</td><td class="num">${money(t.profit)}</td><td class="num">${money(t.takings)}</td><td class="num">${Math.round(t.rackets)}</td></tr>
       </tbody></table></div>
       ${hasOpen?`<p class="note" style="margin:0">Months marked est. share your entered ${fyLabel(repYear)} totals out evenly${repYear===CUR?', up to when you started logging':''}.</p>`:''}
     </section>`;
