@@ -207,7 +207,7 @@ textarea{width:100%;min-height:90px;border:1px solid var(--line);border-radius:1
 <script>
 (function(){
 const KEY='stringbook-v1';
-const VERSION='2.0', VERSION_DATE='9 Oct 2026';
+const VERSION='2.1', VERSION_DATE='9 Oct 2026';
 const SPORTS=[{id:'tennis',name:'Tennis'},{id:'squash',name:'Squash'},{id:'badminton',name:'Badminton'}];
 const MONTHS=['May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr'];
 const gbp=new Intl.NumberFormat('en-GB',{style:'currency',currency:'GBP'});
@@ -421,13 +421,13 @@ function renderReports(){
     ['Total profit',x=>x.profit,money,'tot'],['Total taken',x=>x.takings,money,'sub'],['Rackets (3 sports)',x=>Math.round(x.rackets),String,'sub'],['Ben restrings',x=>Math.round(x.ben.count),String,'sub']];
   $('#view-reports').innerHTML=`
     <section class="card stack"><h2>Year on year</h2>${legend}
-      <div class="chart">${stackChart(all.map(([y])=>fyLabel(y)),series(all.map(a=>a[1])))}</div>
+      <div class="chart">${stackChart(allNew.map(([y])=>fyLabel(y)),series(allNew.map(a=>a[1])))}</div>
       <div class="tablewrap"><table class="yoy"><thead><tr><th></th>${allNew.map(([y])=>`<th>${fyLabel(y)}</th>`).join('')}</tr></thead><tbody>
         ${rows.map(([n,f,fm,cls])=>`<tr class="${cls||''}"><td>${n}</td>${allNew.map(([,x])=>`<td class="num">${cell(f(x),fm)}</td>`).join('')}</tr>`).join('')}
       </tbody></table></div>
       <p class="note" style="margin:0">Earlier years are from the totals you entered. Rackets and takings there are estimated at ${SPORTS.map(s=>`${s.name} ${money(S.settings.avgPrice[s.id])}`).join(', ')} per racket.</p>
     </section>
-    <div class="yrtabs" role="group" aria-label="Report year">${ys.map(y=>`<button data-ry="${y}" aria-pressed="${y===repYear}">${fyLabel(y)}</button>`).join('')}</div>
+    <div class="yrtabs" role="group" aria-label="Report year">${[...ys].reverse().map(y=>`<button data-ry="${y}" aria-pressed="${y===repYear}">${fyLabel(y)}</button>`).join('')}</div>
     <section class="card stack"><h2>${fyLabel(repYear)} at a glance</h2>
       <div class="kpis">
         <div class="kpi"><b class="num">${money0(t.profit)}</b><span>Total profit${change!=null?` · <span style="color:var(--${change>=0?'accent':'danger'})">${change>=0?'+':''}${change.toFixed(0)}% vs ${fyLabel(repYear-1)}</span>`:''}</span></div>
