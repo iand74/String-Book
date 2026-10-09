@@ -1,4 +1,4 @@
-# String Book
+# Ian & Helen’s Stringing Takings
 
 Racket stringing takings app. Data is stored only on the phone (no database).
 
