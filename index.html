@@ -142,6 +142,9 @@ th,td{padding:8px 6px;text-align:right;white-space:nowrap;border-bottom:1px soli
 th:first-child,td:first-child{text-align:left;position:sticky;left:0;background:var(--surface)}
 thead th{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:600}
 tr.tot td{font-weight:700;border-bottom:0}
+table.yoy{font-size:12.5px}
+table.yoy th,table.yoy td{padding:8px 3px}
+table.yoy td:first-child{white-space:normal;min-width:70px;padding-right:6px}
 tr.sub td{color:var(--muted)}
 .est{font-size:10px;font-weight:600;color:var(--muted);background:var(--surface-2);border:1px solid var(--line);border-radius:5px;padding:0 4px;margin-left:4px;vertical-align:1px}
 .legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--muted)}
@@ -204,7 +207,7 @@ textarea{width:100%;min-height:90px;border:1px solid var(--line);border-radius:1
 <script>
 (function(){
 const KEY='stringbook-v1';
-const VERSION='1.9', VERSION_DATE='9 Oct 2026';
+const VERSION='2.0', VERSION_DATE='9 Oct 2026';
 const SPORTS=[{id:'tennis',name:'Tennis'},{id:'squash',name:'Squash'},{id:'badminton',name:'Badminton'}];
 const MONTHS=['May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr'];
 const gbp=new Intl.NumberFormat('en-GB',{style:'currency',currency:'GBP'});
@@ -402,7 +405,7 @@ function stackChart(cats,series,h){
 }
 const legend=`<div class="legend">${[['tennis','Tennis'],['ben','Ben'],['squash','Squash'],['badminton','Badminton'],['extras','Extras']].map(([c,n])=>`<span><i style="background:var(--${c})"></i>${n}</span>`).join('')}</div>`;
 function renderReports(){
-  const ys=years();const all=ys.map(y=>[y,totals(y)]);const t=totals(repYear);const m=monthly(repYear);
+  const ys=years();const all=ys.map(y=>[y,totals(y)]);const allNew=[...all].reverse();const t=totals(repYear);const m=monthly(repYear);
   const series=t2=>[{c:'tennis',vals:t2.map(x=>x.tennis.profit)},{c:'ben',vals:t2.map(x=>x.ben.amount)},{c:'squash',vals:t2.map(x=>x.squash.profit)},{c:'badminton',vals:t2.map(x=>x.badminton.profit)},{c:'extras',vals:t2.map(x=>x.extras)}];
   const hasOpen=!!S.openings[repYear];
   const logged=S.entries.filter(e=>fyOf(e.ts)===repYear&&e.type==='job');
@@ -419,8 +422,8 @@ function renderReports(){
   $('#view-reports').innerHTML=`
     <section class="card stack"><h2>Year on year</h2>${legend}
       <div class="chart">${stackChart(all.map(([y])=>fyLabel(y)),series(all.map(a=>a[1])))}</div>
-      <div class="tablewrap"><table><thead><tr><th></th>${all.map(([y])=>`<th>${fyLabel(y)}</th>`).join('')}</tr></thead><tbody>
-        ${rows.map(([n,f,fm,cls])=>`<tr class="${cls||''}"><td>${n}</td>${all.map(([,x])=>`<td class="num">${cell(f(x),fm)}</td>`).join('')}</tr>`).join('')}
+      <div class="tablewrap"><table class="yoy"><thead><tr><th></th>${allNew.map(([y])=>`<th>${fyLabel(y)}</th>`).join('')}</tr></thead><tbody>
+        ${rows.map(([n,f,fm,cls])=>`<tr class="${cls||''}"><td>${n}</td>${allNew.map(([,x])=>`<td class="num">${cell(f(x),fm)}</td>`).join('')}</tr>`).join('')}
       </tbody></table></div>
       <p class="note" style="margin:0">Earlier years are from the totals you entered. Rackets and takings there are estimated at ${SPORTS.map(s=>`${s.name} ${money(S.settings.avgPrice[s.id])}`).join(', ')} per racket.</p>
     </section>
