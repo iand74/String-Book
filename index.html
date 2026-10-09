@@ -462,9 +462,10 @@ function renderSettings(){
     <section class="card stack"><h2>Backup</h2>
       <p class="note" style="margin:0"><b>${st.lastBackup?'Last backup: '+new Date(st.lastBackup).toLocaleString('en-GB',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):'No backup saved yet.'}</b> Tap Save backup once, then choose Save to Files.</p><p class="note" style="margin:0">Your figures are stored only on this phone. Save a backup now and then, for example to iCloud Drive, so you can restore it on a new phone.</p>
       <div class="row2"><button class="btn small" id="expJson">Save backup</button><button class="btn small ghost" id="expCsv">Export CSV</button><button class="btn small ghost" id="copyJson">Copy backup text</button></div>
-      <label class="label" for="impFile">Restore from a backup file</label><input type="file" id="impFile" accept=".json,application/json">
+      <label class="label" for="impFile">Restore from a backup file</label><input type="file" id="impFile">
       <label class="label" for="impText">Or paste backup text</label><textarea id="impText" placeholder='{"v":1,...}'></textarea>
       <div class="row2"><button class="btn small ghost" id="impBtn">Restore pasted backup</button></div>
+      <div id="impConfirm"></div>
     </section>
     <section class="card stack"><h2>Start again</h2><p class="note" style="margin:0">Removes every entry and total from this phone.</p><button class="btn small ghost warn" id="wipe">Erase all data</button></section>
     <p class="note" style="text-align:center">${S.entries.length} entries stored on this phone</p>`;
@@ -484,9 +485,19 @@ function renderSettings(){
   $('#expJson').onclick=()=>giveFile(backup(),fname('backup','json'),'application/json',()=>{S.settings.lastBackup=new Date().toISOString();save();renderSettings();toast('Backup saved');});
   $('#expCsv').onclick=()=>{const L=['date,financial_year,type,sport,price_taken,profit'];S.entries.forEach(e=>L.push([new Date(e.ts).toISOString().slice(0,10),fyLabel(fyOf(e.ts)),e.type,e.sport||'',e.price,e.profit].join(',')));giveFile(L.join('\n'),fname('entries','csv'),'text/csv',()=>toast('CSV saved'));};
   $('#copyJson').onclick=()=>{const t=backup();navigator.clipboard.writeText(t).then(()=>toast('Backup copied. Paste it into Notes or an email to yourself.'),()=>{const ta=$('#impText');ta.value=t;ta.select();toast('Backup text selected below. Copy it.');});};
-  const restore=txt=>{try{const d=JSON.parse(txt);if(!d||!Array.isArray(d.entries))throw 0;localStorage.setItem(KEY,JSON.stringify(d));S=load();render();toast(`Restored ${S.entries.length} entries`);}catch(e){toast('That isn\'t a String Book backup. Check you copied all of it.');}};
-  $('#impFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>restore(r.result);r.readAsText(f);};
-  $('#impBtn').onclick=()=>restore($('#impText').value);
+  const restore=(txt,src)=>{let d;try{d=JSON.parse(txt);if(!d||!Array.isArray(d.entries)||!d.settings)throw 0;}catch(e){$('#impConfirm').innerHTML='';
+      toast(src==='file'?'That file isn\'t a String Book backup. Choose a file named string-book-backup-….json':'That isn\'t a String Book backup. Check you copied all of it.');return;}
+    const cur=S.entries.length;const when=d.saved||(d.entries.length?new Date(d.entries.reduce((a,e)=>e.ts>a?e.ts:a,'')).toLocaleString('en-GB'):'unknown date');
+    $('#impConfirm').innerHTML=`<div class="card stack" style="border-color:var(--accent)"><b>Restore this backup?</b>
+      <div class="note">Backup saved ${esc(when)}: <b>${d.entries.length} entries</b>${d.summary?'<br>'+esc(d.summary):''}</div>
+      <div class="note ${cur>d.entries.length?'warn':''}">This replaces the ${cur} entries on this phone.${cur>d.entries.length?' The backup has fewer entries than this phone, so check it is your latest one.':''}</div>
+      <div class="row2"><button class="btn small" id="impYes">Restore</button><button class="btn small ghost" id="impNo">Cancel</button></div></div>`;
+    $('#impNo').onclick=()=>{$('#impConfirm').innerHTML='';$('#impFile').value='';};
+    $('#impYes').onclick=()=>{try{localStorage.setItem(KEY,JSON.stringify(d));}catch(e){toast('Could not save on this phone. Storage may be blocked.');return;}S=load();render();toast(`Restored ${S.entries.length} entries`);};
+    $('#impConfirm').scrollIntoView({behavior:'smooth',block:'center'});
+  };
+  $('#impFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>restore(r.result,'file');r.readAsText(f);};
+  $('#impBtn').onclick=()=>restore($('#impText').value,'paste');
   $('#wipe').onclick=function(){if(this.dataset.armed){S=fresh();save();render();toast('All data erased');return;}this.dataset.armed=1;this.textContent='Tap again to erase everything';this.classList.add('warn');setTimeout(()=>{delete this.dataset.armed;this.textContent='Erase all data';},4000);};
 }
 
