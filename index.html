@@ -128,6 +128,7 @@ h1,h2,h3{margin:0;text-wrap:balance}
 .del{border:1px solid var(--line);background:transparent;border-radius:8px;padding:6px 8px;font-size:12px;color:var(--muted)}
 .del.confirm{background:var(--danger);border-color:var(--danger);color:#fff}
 
+.ver{text-align:center;font-size:12px;color:var(--muted);padding-block:22px 4px;font-variant-numeric:tabular-nums}
 /* tabs */
 .tabs{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(3,1fr);padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));z-index:5}
 .tabs button{border:0;background:transparent;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px;font-size:11px;font-weight:600;color:var(--muted)}
@@ -190,6 +191,7 @@ textarea{width:100%;min-height:90px;border:1px solid var(--line);border-radius:1
   <main id="view-home" class="stack"></main>
   <main id="view-reports" class="stack" hidden></main>
   <main id="view-settings" class="stack" hidden></main>
+  <footer class="ver" id="ver"></footer>
 </div>
 
 <nav class="tabs" aria-label="Sections">
@@ -202,6 +204,7 @@ textarea{width:100%;min-height:90px;border:1px solid var(--line);border-radius:1
 <script>
 (function(){
 const KEY='stringbook-v1';
+const VERSION='1.8', VERSION_DATE='9 Oct 2026';
 const SPORTS=[{id:'tennis',name:'Tennis'},{id:'squash',name:'Squash'},{id:'badminton',name:'Badminton'}];
 const MONTHS=['May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr'];
 const gbp=new Intl.NumberFormat('en-GB',{style:'currency',currency:'GBP'});
@@ -481,7 +484,7 @@ function renderSettings(){
   document.querySelectorAll('[data-saveop]').forEach(b=>b.onclick=()=>{const y=+b.dataset.saveop;const o={};SPORTS.forEach(s=>o[s.id]=num(`op-${y}-${s.id}`));o.ben=num(`op-${y}-ben`);o.extras=num(`op-${y}-extras`);
     if(y===START)o.asOf=(S.openings[y]&&S.openings[y].asOf)||S.startedAt;S.openings[y]=o;save();render();toast(`${fyLabel(y)} totals saved`);});
   const stamp=()=>{const d=new Date(),z=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}-${z(d.getHours())}${z(d.getMinutes())}`;};
-  const backup=()=>{const t=totals(CUR);return JSON.stringify(Object.assign({app:'String Book backup',saved:new Date().toLocaleString('en-GB'),summary:`${S.entries.length} entries. ${fyLabel(CUR)} profit so far ${money(t.profit)}, ${Math.round(t.rackets)} rackets.`},S),null,2);};
+  const backup=()=>{const t=totals(CUR);return JSON.stringify(Object.assign({app:'String Book backup',appVersion:VERSION,saved:new Date().toLocaleString('en-GB'),summary:`${S.entries.length} entries. ${fyLabel(CUR)} profit so far ${money(t.profit)}, ${Math.round(t.rackets)} rackets.`},S),null,2);};
   const fname=(kind,ext)=>`string-book-${kind}-${stamp()}.${ext}`;
   async function giveFile(text,name,type,done){done=done||function(){};
     const blob=new Blob([text],{type});
@@ -499,7 +502,7 @@ function renderSettings(){
       <div class="note ${cur>d.entries.length?'warn':''}">This replaces the ${cur} entries on this phone.${cur>d.entries.length?' The backup has fewer entries than this phone, so check it is your latest one.':''}</div>
       <div class="row2"><button class="btn small" id="impYes">Restore</button><button class="btn small ghost" id="impNo">Cancel</button></div></div>`;
     $('#impNo').onclick=()=>{$('#impConfirm').innerHTML='';$('#impFile').value='';};
-    $('#impYes').onclick=()=>{try{localStorage.setItem(KEY,JSON.stringify(d));}catch(e){toast('Could not save on this phone. Storage may be blocked.');return;}S=load();render();toast(`Restored ${S.entries.length} entries`);};
+    $('#impYes').onclick=()=>{['app','appVersion','saved','summary'].forEach(k=>delete d[k]);try{localStorage.setItem(KEY,JSON.stringify(d));}catch(e){toast('Could not save on this phone. Storage may be blocked.');return;}S=load();render();toast(`Restored ${S.entries.length} entries`);};
     $('#impConfirm').scrollIntoView({behavior:'smooth',block:'center'});
   };
   $('#impFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>restore(r.result,'file');r.readAsText(f);};
@@ -516,6 +519,7 @@ function render(){
   const ys=years();$('#yearSel').innerHTML=ys.map(y=>`<option value="${y}"${y===year?' selected':''}>${fyLabel(y)}${y===CUR?' (now)':''}</option>`).join('');
   if(tab==='home')renderHome();else if(tab==='reports'){if(!ys.includes(repYear))repYear=CUR;renderReports();}else renderSettings();
 }
+$('#ver').textContent=`Version ${VERSION} · ${VERSION_DATE}`;
 $('#yearSel').onchange=e=>{year=+e.target.value;repYear=year;render();};
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>go(b.dataset.tab));
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist();}catch(e){}
